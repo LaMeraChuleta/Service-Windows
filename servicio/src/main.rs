@@ -1,5 +1,6 @@
 #[cfg(windows)]
 fn main() -> windows_service::Result<()> {
+    //Bibliotecas
     use std::ffi::OsString;
     use windows_service::{
         service::{
@@ -14,14 +15,16 @@ fn main() -> windows_service::Result<()> {
             ServiceManagerAccess
         },
     };
+    //Permisos para el servicio
     let manager_access = ServiceManagerAccess::CONNECT | ServiceManagerAccess::CREATE_SERVICE;
+    //Conecta con la base de datos de servicios
     let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
     let service_binary_path = ::std::env::current_exe()
         .unwrap()
         .with_file_name("ejecutable.exe");
     let service_info = ServiceInfo { 
-        name: OsString::from("fichero_servicio"),
-        display_name: OsString::from("Fichero servicio"),
+        name: OsString::from("dir_service_chuleta"),
+        display_name: OsString::from("Servcio-Chuleta"),
         service_type: ServiceType::OWN_PROCESS,
         start_type: ServiceStartType::OnDemand,
         error_control: ServiceErrorControl::Normal,
