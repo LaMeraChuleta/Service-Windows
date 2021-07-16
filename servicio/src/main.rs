@@ -3,17 +3,8 @@ fn main() -> windows_service::Result<()> {
     //Bibliotecas
     use std::ffi::OsString;
     use windows_service::{
-        service::{
-            ServiceAccess, 
-            ServiceErrorControl, 
-            ServiceInfo, 
-            ServiceStartType, 
-            ServiceType
-        },
-        service_manager::{
-            ServiceManager, 
-            ServiceManagerAccess
-        },
+        service::{ ServiceAccess, ServiceErrorControl, ServiceInfo, ServiceStartType, ServiceType},
+        service_manager::{ ServiceManager, ServiceManagerAccess},
     };
     //Permisos para el servicio
     let manager_access = ServiceManagerAccess::CONNECT | ServiceManagerAccess::CREATE_SERVICE;

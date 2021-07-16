@@ -6,38 +6,15 @@ fn main() -> windows_service::Result<()> {
 fn main() {
     panic!("This program is only intended to run on Windows.");
 }
-// mod dataBase {
-//     use sqlx::mssql::MssqlConnectOptions;    
-//     fn crear_conexion(){
-//         let nuevaConexion = MssqlConnectOptions::new()
-//             .host(host)
-//     }
-// }
 #[cfg(windows)]
 mod service {
     //Blibliotecas importadas
     use std::{ffi::OsString, sync::mpsc, time::Duration};
-    use windows_service::{
-        define_windows_service,
-        Result,
-        service::{
-            ServiceControl, 
-            ServiceControlAccept, 
-            ServiceExitCode, 
-            ServiceState, 
-            ServiceStatus,
-            ServiceType,
-        },
-        service_control_handler::{
-            self, 
-            ServiceControlHandlerResult
-        },
+    use windows_service::{ define_windows_service, Result,
+        service::{ ServiceControl, ServiceControlAccept, ServiceExitCode, ServiceState, ServiceStatus, ServiceType },
+        service_control_handler::{ self, ServiceControlHandlerResult },
         service_dispatcher,
     };  
-    pub enum Status {
-        Pause,
-        Stop,             
-    }
     //Constantes   
     const SERVICE_NAME: &str = "dir_service_chuleta";
     const SERVICE_TYPE: ServiceType = ServiceType::OWN_PROCESS;        
@@ -55,28 +32,11 @@ mod service {
         // Create a channel to be able to poll a stop event from the service worker loop.
         let (shutdown_tx, shutdown_rx) = mpsc::channel();
         //Se realiza la suscripcion para los evento de windows 
-        let event_handler = move |control_event| -> ServiceControlHandlerResult {
-            let mut archivo_eventos = File::create("C:\\log.txt").unwrap();    
-            match control_event {                
-                //Notifica a un servicio para que informe del estado actual del servicio
-                // gerente de control. Siempre devuelve NoError incluso si no está implementado.
-                ServiceControl::Interrogate => {
-                    archivo_eventos.write_all(b"servcio status Interrogate :?").unwrap();
-                    ServiceControlHandlerResult::NoError
-                },
-                ServiceControl::Pause => {
-                    archivo_eventos.write_all(b"servcio status pausa:/").unwrap();
-                    shutdown_tx.send(Status::Pause).unwrap();
-                    ServiceControlHandlerResult::NoError
-                },
-                ServiceControl::Continue => {
-                    archivo_eventos.write_all(b"servcio status continuar :)").unwrap();
-                    ServiceControlHandlerResult::NoError
-                },
-                // Handle stop
+        let event_handler = move |control_event| -> ServiceControlHandlerResult {            
+            match control_event {                                    
+                ServiceControl::Interrogate => ServiceControlHandlerResult::NoError,                
                 ServiceControl::Stop => {
-                    archivo_eventos.write_all(b"servcio status detenido :(").unwrap();
-                    shutdown_tx.send(Status::Stop).unwrap();
+                    shutdown_tx.send(()).unwrap();
                     ServiceControlHandlerResult::NoError
                 }
                 _ => ServiceControlHandlerResult::NotImplemented,
@@ -98,23 +58,10 @@ mod service {
         loop {             
             archivo.write_all(b"hola mundo\n").unwrap();
             // Poll shutdown event.
-            match shutdown_rx.recv_timeout(Duration::from_secs(10)) {
+            match shutdown_rx.recv_timeout(Duration::from_secs(10)) {                
                 // Break the loop either upon stop or channel disconnect
-                Ok(Status::Stop) | Err(mpsc::RecvTimeoutError::Disconnected) => break,
-                Ok(Status::Pause) => {
-                    status_handle.set_service_status(ServiceStatus {
-                        service_type: SERVICE_TYPE,
-                        current_state: ServiceState::Paused,
-                        controls_accepted: ServiceControlAccept::empty(),
-                        exit_code: ServiceExitCode::Win32(0),
-                        checkpoint: 0,
-                        wait_hint: Duration::default(),
-                        process_id: None,
-                    })?;
-                    ()
-                },
-                // Continue work if no events were received within the timeout
-                Err(mpsc::RecvTimeoutError::Timeout) => (),
+                Ok(_) | Err(mpsc::RecvTimeoutError::Disconnected) => break,                  
+                Err(mpsc::RecvTimeoutError::Timeout) => (),                                          
             };
         }        
         // Tell the system that service has stopped.
@@ -127,7 +74,6 @@ mod service {
             wait_hint: Duration::default(),
             process_id: None,
         })?;
-        
         Ok(())
     }
 }
